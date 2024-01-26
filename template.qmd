@@ -167,29 +167,60 @@ dropmissing!(df) # drop any missing data
 1. In the instructions, we plotted the average monthly water level from each month using `groupby`. Repeat this analysis, using the full dataset (all years). 
 1. Now repeat the analysis, but group by day of the year. What do you notice? (**Hint**: use `Dates.dayofyear` to get the day of the year from a `DateTime` object)
 
+
 ```{julia}
 # Subsetting for March 2020
-march_2020_data = df[(df[!, :datetime] .>= DateTime(2020, 3, 1)) .& (df[!, :datetime] .< DateTime(2020, 4, 1)), :]
+t_start = DateTime(2020, 3, 1, 0) # <1>
+t_end = DateTime(2020, 3, 31, 23)
+march_2020_df = @subset(df, t_start .<= :datetime .<= t_end) # <2>
 
-# Plotting hourly water levels
-plot(march_2020_data[!, :datetime], march_2020_data[!, :lsl], xlabel="Date", ylabel="Water Level (m)", label="Hourly Water Levels for March 2020", legend=:topleft)
-
+# Plotting hourly water levels for March 2020
+plot( march_2020_df.datetime,
+    march_2020_df.lsl;
+    xlabel="Date",
+    ylabel="Water Level (m)",
+    label="Hourly Water Levels for March 2020",
+    legend=:topleft)
 ```
 
-```{julia} 
-# Group by month and calculate the mean water level
-monthly_avg_data = combine(groupby(df, Dates.monthname.(df[!, :datetime])), :lsl => mean => :avg_lsl)
+```{julia}
 
-# Plotting average monthly water levels
-plot(monthly_avg_data[!, :month], monthly_avg_data[!, :avg_lsl], xlabel="Month", ylabel="Average Water Level (m)", label="Average Monthly Water Levels", legend=:topleft)
+# Create a new column called :month
+df[!, :month] = Dates.month.(df.datetime)
+
+# Discard rows with missing values in :lsl
+dropmissing!(df, :lsl)
+
+# Group the data by month
+df_bymonth = groupby(df, :month)
+
+# Calculate the mean of the :lsl column for each month
+df_climatology = combine(df_bymonth, :lsl => mean => :lsl_avg)
+
+# Plot the climatology
+plot(df_climatology.month,
+    df_climatology.lsl_avg;
+    xticks=1:12,
+    xlabel="Month",
+    ylabel="Average Water Level",
+    linewidth=3,
+    label=false,)
 
 ```
 
 ```{julia}
-# Avg Daily Water Level (ALL YEARS)
-# Group by day of the year and calculate the mean water level
-daily_avg_data = combine(groupby(df, Dates.dayofyear), :lsl => mean => :avg_lsl)
+# Group the data by day of the year
+df[!, :dayofyear] = Dates.dayofyear.(df.datetime) 
+df_byday = groupby(df, :dayofyear) 
 
-# Plotting average daily water levels
-plot(daily_avg_data[!, :dayofyear], daily_avg_data[!, :avg_lsl], xlabel="Day of the Year", ylabel="Average Water Level (m)", label="Average Daily Water Levels", legend=:topleft)
+# Calculate the mean of the :lsl column for each day
+daily_avg_data = combine(df_byday, :lsl => mean => :avg_lsl) 
+
+# Plot the average daily water levels
+plot(daily_avg_data.dayofyear, 
+    daily_avg_data.avg_lsl;
+    xlabel="Day of the Year",
+    ylabel="Average Water Level (m)",
+    label="Average Daily Water Levels",
+    legend=:topleft)
 ```
