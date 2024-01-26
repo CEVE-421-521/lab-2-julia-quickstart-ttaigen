@@ -1,7 +1,7 @@
 ---
 title: "Lab 2: Julia Quickstart"
 subtitle: "Functions, Logic, and Packages"
-author: "CEVE 421/521" # Replace with <YOUR NAME> (<NETID>)
+author: Taigen Hunter-Galvan (tmh12) 
 date: 2024-01-19
 week: 2
 categories: [Lab]
